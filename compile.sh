@@ -27,6 +27,8 @@ EXT_RECURSIONGUARD_VERSION="0.1.0"
 EXT_LIBDEFLATE_VERSION="0.1.0"
 EXT_MORTON_VERSION="0.1.2"
 EXT_XXHASH_VERSION="0.1.1"
+EXT_VANILLAGENERATOR_VERSION="56fc48ea1367e1d08b228dfa580b513fbec8ca31"
+EXT_ZSTD_VERSION="0.11.0"
 
 function write_out {
 	echo "[$1] $2"
@@ -640,7 +642,7 @@ function build_libjpeg {
 	fi
 	#libjpeg
 	echo -n "[libjpeg] downloading $LIBJPEG_VERSION..."
-	download_file "http://ijg.org/files/jpegsrc.v$LIBJPEG_VERSION.tar.gz" | tar -zx >> "$DIR/install.log" 2>&1
+	download_file "https://ijg.org/files/jpegsrc.v$LIBJPEG_VERSION.tar.gz" | tar -zx >> "$DIR/install.log" 2>&1
 	mv jpeg-$LIBJPEG_VERSION libjpeg
 	echo -n " checking..."
 	cd libjpeg
@@ -834,6 +836,9 @@ get_github_extension "igbinary" "$EXT_IGBINARY_VERSION" "igbinary" "igbinary"
 
 get_github_extension "recursionguard" "$EXT_RECURSIONGUARD_VERSION" "pmmp" "ext-recursionguard"
 
+#get_github_extension "zstd" "$EXT_ZSTD_VERSION" "kjdev" "php-ext-zstd"
+get_pecl_extension "zstd" "$EXT_ZSTD_VERSION"
+
 echo -n "  crypto: downloading $EXT_CRYPTO_VERSION..."
 git clone https://github.com/bukka/php-crypto.git "$BUILD_DIR/php/ext/crypto" >> "$DIR/install.log" 2>&1
 cd "$BUILD_DIR/php/ext/crypto"
@@ -855,6 +860,8 @@ get_github_extension "xxhash" "$EXT_XXHASH_VERSION" "pmmp" "ext-xxhash"
 if [ "$HAVE_LEGACY_CHUNKUTILS" != "" ]; then
 	get_github_extension "legacy-chunkutils" "$EXT_LEGACY_CHUNKUTILS_VERSION" "pmmp" "PocketMine-C-ChunkUtils"
 fi
+
+get_github_extension "vanillagenerator" "$EXT_VANILLAGENERATOR_VERSION" "NetherGamesMC" "ext-vanillagenerator"
 
 echo -n "[PHP]"
 
@@ -982,7 +989,9 @@ $HAVE_MYSQLI \
 --enable-ftp \
 --enable-opcache=$HAVE_OPCACHE \
 --enable-opcache-jit=$HAVE_OPCACHE \
+--enable-zstd \
 --enable-igbinary \
+--enable-vanillagenerator \
 --with-crypto \
 --enable-recursionguard \
 --enable-xxhash \
@@ -1056,6 +1065,7 @@ echo "error_reporting=-1" >> "$INSTALL_DIR/bin/php.ini"
 echo "display_errors=1" >> "$INSTALL_DIR/bin/php.ini"
 echo "display_startup_errors=1" >> "$INSTALL_DIR/bin/php.ini"
 echo "recursionguard.enabled=0 ;disabled due to minor performance impact, only enable this if you need it for debugging" >> "$INSTALL_DIR/bin/php.ini"
+echo "extension_dir=./$INSTALL_DIR/lib/php/extensions/no-debug-zts-20200930" >> "$INSTALL_DIR/bin/php.ini"
 
 if [ "$HAVE_OPCACHE" == "yes" ]; then
 	echo "zend_extension=opcache.so" >> "$INSTALL_DIR/bin/php.ini"
