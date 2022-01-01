@@ -36,6 +36,7 @@ set PHP_LIBDEFLATE_VER=0.1.0
 set PHP_XXHASH_VER=0.1.1
 
 set PHP_VANILLAGENERATOR_VER=56fc48ea1367e1d08b228dfa580b513fbec8ca31
+set PHP_ZSTD_VER=0.11.0
 
 set script_path=%~dp0
 set log_file=%script_path%compile.log
@@ -207,6 +208,13 @@ call :get-extension-zip-from-github "libdeflate"            "%PHP_LIBDEFLATE_VER
 call :get-extension-zip-from-github "xxhash"                "%PHP_XXHASH_VER%"                "pmmp"     "ext-xxhash"              || exit 1
 call :get-extension-zip-from-github "vanillagenerator"      "%PHP_VANILLAGENERATOR_VER%" "NetherGamesMC" "ext-vanillagenerator"    || exit 1
 
+call :pm-echo " - zstd: downloading %PHP_ZSTD_VER%..."
+git clone https://github.com/kjdev/php-ext-zstd.git zstd >>"%log_file%" 2>&1 || exit 1
+cd /D zstd
+git checkout %PHP_ZSTD_VER% >>"%log_file%" 2>&1 || exit 1
+git submodule update --init --recursive >>"%log_file%" 2>&1 || exit 1
+cd /D ..
+
 call :pm-echo " - crypto: downloading %PHP_CRYPTO_VER%..."
 git clone https://github.com/bukka/php-crypto.git crypto >>"%log_file%" 2>&1 || exit 1
 cd /D crypto
@@ -250,6 +258,7 @@ call configure^
  --enable-phar^
  --enable-pocketmine-chunkutils=shared^
  --enable-vanillagenerator^
+ --enable-zstd^
  --enable-recursionguard=shared^
  --enable-sockets^
  --enable-tokenizer^
@@ -387,7 +396,6 @@ call :pm-echo " - %~1: downloading %~2..."
 call :get-zip https://github.com/%~3/%~4/archive/%~2.zip || exit /B 1
 move %~4-%~2 %~1 >>"%log_file%" 2>&1 || exit /B 1
 exit /B 0
-
 
 :get-zip
 wget %~1 --no-check-certificate -q -O temp.zip || exit /B 1
