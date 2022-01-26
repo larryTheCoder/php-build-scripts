@@ -34,38 +34,38 @@ jobs:
         with:
           path: Linux.zip
           name: "Linux"
-  build-windows:
-    runs-on: windows-2019
-    if: contains(github.event.head_commit.message, '[ci skip]') != 'true'
-    steps:  
-      - uses: actions/checkout@v2
-      - name: Cache Check
-        id: build-cache
-        uses: actions/cache@v2
-        with:
-          path: "./bin"
-          key: "build-generic-windows-${{ hashFiles('./windows-compile-vs.bat') }}"
-      - name: Install wget
-        if: steps.build-cache.outputs.cache-hit != 'true'
-        run: choco install wget --no-progress
-      - name: Compile
-        if: steps.build-cache.outputs.cache-hit != 'true'
-        run: |
-          $env:SOURCES_PATH = "$env:GITHUB_WORKSPACE\pocketmine-php-sdk"
-          .\windows-compile-vs.bat
-          Compress-Archive php-*.zip Windows.zip -Update
-          Compress-Archive compile.log Windows.zip -Update 
-        env:
-          VS_EDITION: Enterprise
-      - name: Upload release files
-        if: steps.build-cache.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
-        with:
-          path: Windows.zip
-          name: "Windows"
+# build-windows:
+#   runs-on: windows-2019
+#   if: contains(github.event.head_commit.message, '[ci skip]') != 'true'
+#   steps:
+#     - uses: actions/checkout@v2
+#     - name: Cache Check
+#       id: build-cache
+#       uses: actions/cache@v2
+#       with:
+#         path: "./bin"
+#         key: "build-generic-windows-${{ hashFiles('./windows-compile-vs.bat') }}"
+#     - name: Install wget
+#       if: steps.build-cache.outputs.cache-hit != 'true'
+#       run: choco install wget --no-progress
+#     - name: Compile
+#       if: steps.build-cache.outputs.cache-hit != 'true'
+#       run: |
+#         $env:SOURCES_PATH = "$env:GITHUB_WORKSPACE\pocketmine-php-sdk"
+#         .\windows-compile-vs.bat
+#         Compress-Archive php-*.zip Windows.zip -Update
+#         Compress-Archive compile.log Windows.zip -Update
+#       env:
+#         VS_EDITION: Enterprise
+#     - name: Upload release files
+#       if: steps.build-cache.outputs.cache-hit != 'true'
+#       uses: actions/upload-artifact@v2
+#       with:
+#         path: Windows.zip
+#         name: "Windows"
   prepare-release:
     runs-on: ubuntu-18.04
-    needs: [build-linux, build-windows]
+    needs: [build-linux]
     if: contains(github.event.head_commit.message, '[ci skip]') != 'true'
     steps:
       - uses: actions/checkout@v2
@@ -85,6 +85,5 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           title: "PHP ${{ steps.php.outputs.version }}"
           files: |
-            Windows/Windows.zip
             Linux/Linux.zip
           prerelease: false
