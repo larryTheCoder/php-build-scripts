@@ -8,19 +8,11 @@ jobs:
     if: contains(github.event.head_commit.message, '[ci skip]') != 'true'
     steps:
       - uses: actions/checkout@v2
-      - name: Cache Check
-        id: build-cache
-        uses: actions/cache@v2
-        with:
-          path: "./bin"
-          key: "build-generic-linux-${{ hashFiles('./compile.sh') }}"
       - name: Install dependencies via APT
-        if: steps.build-cache.outputs.cache-hit != 'true'
         run: |
           sudo apt update
           sudo apt install -y re2c libtool libtool-bin g++ git bison wget gzip make autoconf automake libc-bin bzip2 cmake pkg-config zip
       - name: Compile
-        if: steps.build-cache.outputs.cache-hit != 'true'
         run: |
           chmod +x compile.sh
           export CFLAGS="$CFLAGS -march=x86-64"
@@ -29,7 +21,6 @@ jobs:
           tar -czf PHP_Linux-x86_64.tar.gz bin
           zip -r Linux.zip PHP_Linux-x86_64.tar.gz install.log
       - name: Upload release files
-        if: steps.build-cache.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v2
         with:
           path: Linux.zip
