@@ -26,15 +26,15 @@ jobs:
           ./compile.sh -t linux64 -j 4 -f -g
 
       - name: Create tarball
-        run: tar -czf ./PHP_Linux-x86_64.tar.gz bin
+        run: |
+          tar -czf ./PHP_Linux-x86_64.tar.gz bin
+          zip -r Linux.zip PHP_Linux-x86_64.tar.gz install.log
         
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: Linux
-          path: |
-            ./PHP_Linux-x86_64.tar.gz
-            install.log
+          path: Linux.zip
           if-no-files-found: error
     
   macos:
@@ -55,7 +55,9 @@ jobs:
           ./compile.sh -t mac-x86-64 -j4 -f -g
           
       - name: Create tarball
-        run: tar -czf ./PHP_MacOS-x86_64.tar.gz bin
+        run: |
+          tar -czf ./PHP_MacOS-x86_64.tar.gz bin
+          zip -r MacOS-x86_64.zip PHP_MacOS-x86_64.tar.gz install.log
         
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
@@ -90,3 +92,28 @@ jobs:
             php-*.zip
             compile.log
           if-no-files-found: error
+  prepare-release:
+    runs-on: ubuntu-18.04
+    needs: [ linux, macos, windows ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set PHP version outputs
+        id: php
+        run: |
+          VERSION=$(cat compile.sh | grep 'PHP_VERSION=' | sed 's/[^0-9.]*//g')
+          echo "::set-output name=version::${VERSION}"
+          TAG=$(echo "${VERSION::-3}")
+          echo "::set-output name=release_tag::${TAG}"
+      - name: Restore release caches
+        uses: actions/download-artifact@v2
+      - name: Create and Publish Release
+        uses: marvinpinto/action-automatic-releases@v1.1.1
+        with:
+          automatic_release_tag: "${{ steps.php.outputs.release_tag }}"
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          title: "PHP ${{ steps.php.outputs.version }}"
+          files: |
+            Linux/Linux.zip
+            MacOS/MacOS-x86-64.zip
+            Windows/php-*.zip
+          prerelease: false
