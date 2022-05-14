@@ -3,7 +3,7 @@
 REM For future users: This file MUST have CRLF line endings. If it doesn't, lots of inexplicable undesirable strange behaviour will result.
 REM Also: Don't modify this version with sed, or it will screw up your line endings.
 set PHP_MAJOR_VER=8.0
-set PHP_VER=%PHP_MAJOR_VER%.17
+set PHP_VER=%PHP_MAJOR_VER%.19
 set PHP_GIT_REV=php-%PHP_VER%
 set PHP_DISPLAY_VER=%PHP_VER%
 set PHP_SDK_VER=2.2.0
@@ -25,7 +25,7 @@ set LIBDEFLATE_VER=6c095314d0c49061f41e1e40be2625dfc2253afa
 
 set PHP_PTHREADS_VER=4.0.0
 set PHP_YAML_VER=2.2.2
-set PHP_CHUNKUTILS2_VER=0.3.1
+set PHP_CHUNKUTILS2_VER=0.3.3
 set PHP_IGBINARY_VER=3.2.7
 set PHP_LEVELDB_VER=317fdcd8415e1566fc2835ce2bdb8e19b890f9f3
 set PHP_CRYPTO_VER=0.3.2
