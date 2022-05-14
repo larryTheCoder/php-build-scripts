@@ -78,6 +78,7 @@ jobs:
           path: |
             ./PHP_MacOS-x86_64.tar.gz
             install.log
+            compile.sh
           if-no-files-found: error
 
       - name: Prepare workspace for upload
@@ -117,6 +118,7 @@ jobs:
           path: |
             php-*.zip
             compile.log
+            windows-compile-vs.bat
           if-no-files-found: error
 
   prepare-release:
