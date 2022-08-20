@@ -3,7 +3,7 @@
 REM For future users: This file MUST have CRLF line endings. If it doesn't, lots of inexplicable undesirable strange behaviour will result.
 REM Also: Don't modify this version with sed, or it will screw up your line endings.
 set PHP_MAJOR_VER=8.0
-set PHP_VER=%PHP_MAJOR_VER%.21
+set PHP_VER=%PHP_MAJOR_VER%.22
 set PHP_GIT_REV=php-%PHP_VER%
 set PHP_DISPLAY_VER=%PHP_VER%
 set PHP_SDK_VER=2.2.0
@@ -23,7 +23,7 @@ set PTHREAD_W32_VER=3.0.0
 set LEVELDB_MCPE_VER=1c7564468b41610da4f498430e795ca4de0931ff
 set LIBDEFLATE_VER=b01537448e8eaf0803e38bdba5acef1d1c8effba
 
-set PHP_PTHREADS_VER=4.0.0
+set PHP_PTHREADS_VER=4.1.2
 set PHP_YAML_VER=2.2.2
 set PHP_CHUNKUTILS2_VER=0.3.3
 set PHP_IGBINARY_VER=3.2.7
@@ -33,6 +33,7 @@ set PHP_RECURSIONGUARD_VER=0.1.0
 set PHP_MORTON_VER=0.1.2
 set PHP_LIBDEFLATE_VER=0.1.0
 set PHP_XXHASH_VER=0.1.1
+set PHP_XDEBUG_VER=3.1.5
 
 set PHP_VANILLAGENERATOR_VER=56fc48ea1367e1d08b228dfa580b513fbec8ca31
 REM set PHP_ZSTD_VER=0.11.0
@@ -204,6 +205,7 @@ call :get-extension-zip-from-github "recursionguard"        "%PHP_RECURSIONGUARD
 call :get-extension-zip-from-github "morton"                "%PHP_MORTON_VER%"                "pmmp"     "ext-morton"              || exit 1
 call :get-extension-zip-from-github "libdeflate"            "%PHP_LIBDEFLATE_VER%"            "pmmp"     "ext-libdeflate"          || exit 1
 call :get-extension-zip-from-github "xxhash"                "%PHP_XXHASH_VER%"                "pmmp"     "ext-xxhash"              || exit 1
+call :get-extension-zip-from-github "xdebug"                "%PHP_XDEBUG_VER%"                "xdebug"   "xdebug"                  || exit 1
 call :get-extension-zip-from-github "vanillagenerator"      "%PHP_VANILLAGENERATOR_VER%" "NetherGamesMC" "ext-vanillagenerator"    || exit 1
 
 REM call :pm-echo " - zstd: downloading %PHP_ZSTD_VER%..."
@@ -282,6 +284,8 @@ REM --enable-zstd^
  --with-simplexml^
  --with-sodium^
  --with-sqlite3=shared^
+ --with-xdebug=shared^
+ --with-xdebug-compression^
  --with-xml^
  --with-yaml^
  --with-pdo-mysql^
@@ -349,6 +353,17 @@ call :pm-echo "Generating php.ini..."
 (echo ; Enable it at your own risk. See https://www.php.net/manual/en/opcache.configuration.php#ini.opcache.jit for possible options.)>>"%php_ini%"
 (echo opcache.jit=off)>>"%php_ini%"
 (echo opcache.jit_buffer_size=128M)>>"%php_ini%"
+(echo.)>>"%php_ini%"
+(echo zend_extension=php_xdebug.dll)>>"%php_ini%"
+(echo ;https://xdebug.org/docs/all_settings#mode)>>"%php_ini%"
+(echo xdebug.mode=off)>>"%php_ini%"
+(echo ;The following overrides allow profiler, gc stats and traces to work correctly in ZTS)>>"%php_ini%"
+(echo xdebug.profiler_output_name=cachegrind.%%s.%%p.%%r)>>"%php_ini%"
+(echo xdebug.gc_stats_output_name=gcstats.%%s.%%p.%%r)>>"%php_ini%"
+(echo xdebug.trace_output_name=trace.%%s.%%p.%%r)>>"%php_ini%"
+
+call :pm-echo "Xdebug is included, but disabled by default. To enable it, change 'xdebug.mode' in your php.ini file."
+
 REM TODO: more entries
 
 cd /D ..\..

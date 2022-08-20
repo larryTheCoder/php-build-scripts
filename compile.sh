@@ -1,21 +1,21 @@
 #!/bin/bash
-[ -z "$PHP_VERSION" ] && PHP_VERSION="8.0.21"
+[ -z "$PHP_VERSION" ] && PHP_VERSION="8.0.22"
 
 ZLIB_VERSION="1.2.11" #1.2.12 breaks on macOS and probably cross-compile too due to ignoring $CC
 GMP_VERSION="6.2.1"
 CURL_VERSION="curl-7_84_0"
 YAML_VERSION="0.2.5"
 LEVELDB_VERSION="1c7564468b41610da4f498430e795ca4de0931ff"
-LIBXML_VERSION="2.9.14"
+LIBXML_VERSION="2.10.0"
 LIBPNG_VERSION="1.6.37"
 LIBJPEG_VERSION="9e"
 OPENSSL_VERSION="1.1.1p" #1.1.1q breaks on macOS (https://github.com/openssl/openssl/issues/18720)
 LIBZIP_VERSION="1.9.2"
 SQLITE3_YEAR="2022"
-SQLITE3_VERSION="3390100" #3.39.1
+SQLITE3_VERSION="3390200" #3.39.2
 LIBDEFLATE_VERSION="6b5b57116c5b1672a2407aa68f3a49c72f877cb3" #1.12
 
-EXT_PTHREADS_VERSION="4.0.0"
+EXT_PTHREADS_VERSION="4.1.2"
 EXT_YAML_VERSION="2.2.2"
 EXT_LEVELDB_VERSION="317fdcd8415e1566fc2835ce2bdb8e19b890f9f3"
 EXT_CHUNKUTILS2_VERSION="0.3.3"
@@ -118,6 +118,7 @@ DO_CLEANUP="yes"
 COMPILE_DEBUG="no"
 HAVE_VALGRIND="--without-valgrind"
 HAVE_OPCACHE="yes"
+HAVE_XDEBUG="yes"
 FSANITIZE_OPTIONS=""
 FLAGS_LTO=""
 
@@ -137,7 +138,7 @@ while getopts "::t:j:srdxff:gnva:" OPTION; do
 			THREADS="$OPTARG"
 			;;
 		d)
-			echo "[opt] Will compile xdebug, will not remove sources"
+			echo "[opt] Will compile everything with debugging symbols, will not remove sources"
 			COMPILE_DEBUG="yes"
 			DO_CLEANUP="no"
 			CFLAGS="$CFLAGS -g"
@@ -295,6 +296,10 @@ if [ "$DO_STATIC" == "yes" ]; then
 	echo "[warning] OPcache cannot be used on static builds; this may have a negative effect on performance"
 	if [ "$FSANITIZE_OPTIONS" != "" ]; then
 		echo "[warning] Sanitizers cannot be used on static builds"
+	fi
+	if [ "$HAVE_XDEBUG" == "yes"]; then
+	  write_out "warning" "Xdebug cannot be built in static mode"
+	  HAVE_XDEBUG="no"
 	fi
 fi
 
@@ -1073,7 +1078,7 @@ fi
 
 echo " done!"
 
-if [[ "$DO_STATIC" != "yes" ]] && [[ "$COMPILE_DEBUG" == "yes" ]]; then
+if [[ "$HAVE_XDEBUG" == "yes" ]]; then
 	get_pecl_extension "xdebug" "$EXT_XDEBUG_VERSION"
 	echo -n "[xdebug] checking..."
 	cd "$BUILD_DIR/php/ext/xdebug"
@@ -1083,8 +1088,16 @@ if [[ "$DO_STATIC" != "yes" ]] && [[ "$COMPILE_DEBUG" == "yes" ]]; then
 	make -j4 >> "$DIR/install.log" 2>&1
 	echo -n " installing..."
 	make install >> "$DIR/install.log" 2>&1
-	echo "zend_extension=xdebug.so" >> "$INSTALL_DIR/bin/php.ini"
+	echo "" >> "$INSTALL_DIR/bin/php.ini" 2>&1
+	echo "zend_extension=xdebug.so" >> "$INSTALL_DIR/bin/php.ini" 2>&1
+	echo ";https://xdebug.org/docs/all_settings#mode" >> "$INSTALL_DIR/bin/php.ini" 2>&1
+	echo "xdebug.mode=off" >> "$INSTALL_DIR/bin/php.ini" 2>&1
+	echo ";The following overrides allow profiler, gc stats and traces to work correctly in ZTS" >> "$INSTALL_DIR/bin/php.ini" 2>&1
+	echo "xdebug.profiler_output_name=cachegrind.%s.%p.%r" >> "$INSTALL_DIR/bin/php.ini" 2>&1
+	echo "xdebug.gc_stats_output_name=gcstats.%s.%p.%r" >> "$INSTALL_DIR/bin/php.ini" 2>&1
+	echo "xdebug.trace_output_name=trace.%s.%p.%r" >> "$INSTALL_DIR/bin/php.ini" 2>&1
 	echo " done!"
+	write_out INFO "Xdebug is included, but disabled by default. To enable it, change 'xdebug.mode' in your php.ini file."
 fi
 
 cd "$DIR"
