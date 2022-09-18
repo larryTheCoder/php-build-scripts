@@ -131,7 +131,7 @@ jobs:
         run: |
           VERSION=$(cat compile.sh | grep 'PHP_VERSION=' | sed 's/[^0-9.]*//g')
           echo "::set-output name=version::${VERSION}"
-          TAG=$(echo "${VERSION::-3}")
+          TAG=$(echo "${VERSION::3}")
           echo "::set-output name=release_tag::${TAG}"
       - name: Restore release caches
         uses: actions/download-artifact@v2
