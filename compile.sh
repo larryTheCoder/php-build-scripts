@@ -17,6 +17,7 @@ LIBDEFLATE_VERSION="6b5b57116c5b1672a2407aa68f3a49c72f877cb3" #1.12
 
 EXT_PTHREADS_VERSION="4.1.3"
 EXT_YAML_VERSION="2.2.2"
+EXT_RDKAFKA_VERSION="6.0.3"
 EXT_LEVELDB_VERSION="317fdcd8415e1566fc2835ce2bdb8e19b890f9f3"
 EXT_CHUNKUTILS2_VERSION="0.3.3"
 EXT_XDEBUG_VERSION="3.1.5"
@@ -856,6 +857,8 @@ get_github_extension "xxhash" "$EXT_XXHASH_VERSION" "pmmp" "ext-xxhash"
 
 get_github_extension "vanillagenerator" "$EXT_VANILLAGENERATOR_VERSION" "NetherGamesMC" "ext-vanillagenerator"
 
+get_github_extension "php-rdkafka" "$EXT_RDKAFKA_VERSION" "arnaud-lb" "ext-rdkafka"
+
 echo -n "[PHP]"
 
 if [ "$DO_OPTIMIZE" != "no" ]; then
@@ -941,6 +944,7 @@ RANLIB=$RANLIB CFLAGS="$CFLAGS $FLAGS_LTO" CXXFLAGS="$CXXFLAGS $FLAGS_LTO" LDFLA
 --with-openssl \
 --with-zip \
 --with-libdeflate="$INSTALL_DIR" \
+--with-rdkafka \
 $HAS_LIBJPEG \
 $HAS_GD \
 --with-leveldb="$INSTALL_DIR" \
