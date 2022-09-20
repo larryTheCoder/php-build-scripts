@@ -590,8 +590,9 @@ function build_kafka {
 	echo -n " checking..."
 
 	RANLIB=$RANLIB ./configure \
-	  --prefix="$INSTALL_DIR" \
-	  --disable-ssl \
+	--install-deps \
+	--prefix="$INSTALL_DIR" \
+	--disable-ssl \
   	--disable-zstd \
 	$EXTRA_FLAGS \
 	$CONFIGURE_FLAGS >> "$DIR/install.log" 2>&1
