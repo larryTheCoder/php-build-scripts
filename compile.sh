@@ -589,8 +589,7 @@ function build_kafka {
 
 	echo -n " checking..."
 
-	RANLIB=$RANLIB ./configure \
-	--install-deps \
+	LDFLAGS="$LDFLAGS -L/usr/local/include -L/usr/local/lib -L${INSTALL_DIR}/lib" CPPFLAGS="$CPPFLAGS -I${INSTALL_DIR}/include" RANLIB=$RANLIB ./configure \
 	--prefix="$INSTALL_DIR" \
 	--disable-ssl \
   	--disable-zstd \
