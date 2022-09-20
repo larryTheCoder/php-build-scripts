@@ -14,10 +14,11 @@ LIBZIP_VERSION="1.9.2"
 SQLITE3_YEAR="2022"
 SQLITE3_VERSION="3390200" #3.39.2
 LIBDEFLATE_VERSION="6b5b57116c5b1672a2407aa68f3a49c72f877cb3" #1.12
+LIBRDKAFKA_VER="9b72ca3aa6c49f8f57eea02f70aadb1453d3ba1f"
 
 EXT_PTHREADS_VERSION="4.1.3"
 EXT_YAML_VERSION="2.2.2"
-EXT_RDKAFKA_VERSION="6.0.3"
+EXT_RDKAFKA_VERSION="8fce7a64dcd235be971d45428eab3e9b067ec413"
 EXT_LEVELDB_VERSION="317fdcd8415e1566fc2835ce2bdb8e19b890f9f3"
 EXT_CHUNKUTILS2_VERSION="0.3.3"
 EXT_XDEBUG_VERSION="3.1.5"
@@ -575,6 +576,33 @@ function build_yaml {
 	echo " done!"
 }
 
+function build_kafka {
+	if [ "$DO_STATIC" == "yes" ]; then
+		local EXTRA_FLAGS="--disable-shared"
+	else
+		local EXTRA_FLAGS="--enable-shared"
+	fi
+	echo -n "[librdkafka] downloading $LIBRDKAFKA_VER..."
+	download_file "https://github.com/edenhill/librdkafka/archive/$LIBRDKAFKA_VER.tar.gz" | tar -zx >> "$DIR/install.log" 2>&1
+	mv librdkafka-$LIBRDKAFKA_VER librdkafka
+	cd librdkafka
+
+	echo -n " checking..."
+
+	RANLIB=$RANLIB ./configure \
+	  --prefix="$INSTALL_DIR" \
+	  --disable-ssl \
+  	--disable-zstd \
+	$EXTRA_FLAGS \
+	$CONFIGURE_FLAGS >> "$DIR/install.log" 2>&1
+	echo -n " compiling..."
+	make -j $THREADS libs >> "$DIR/install.log" 2>&1
+	echo -n " installing..."
+	make install-subdirs >> "$DIR/install.log" 2>&1
+	cd ..
+	echo " done!"
+}
+
 function build_leveldb {
 	echo -n "[LevelDB] downloading $LEVELDB_VERSION..."
 	download_file "https://github.com/pmmp/leveldb/archive/$LEVELDB_VERSION.tar.gz" | tar -zx >> "$DIR/install.log" 2>&1
@@ -776,6 +804,7 @@ function build_libdeflate {
 build_zlib
 build_gmp
 build_openssl
+build_kafka
 build_curl
 build_yaml
 build_leveldb
@@ -857,7 +886,7 @@ get_github_extension "xxhash" "$EXT_XXHASH_VERSION" "pmmp" "ext-xxhash"
 
 get_github_extension "vanillagenerator" "$EXT_VANILLAGENERATOR_VERSION" "NetherGamesMC" "ext-vanillagenerator"
 
-get_github_extension "php-rdkafka" "$EXT_RDKAFKA_VERSION" "arnaud-lb" "ext-rdkafka"
+get_github_extension "php-rdkafka" "$EXT_RDKAFKA_VERSION" "larryTheCoder" "php-rdkafka"
 
 echo -n "[PHP]"
 

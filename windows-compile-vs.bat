@@ -22,6 +22,7 @@ set LIBYAML_VER=0.2.5
 set PTHREAD_W32_VER=3.0.0
 set LEVELDB_MCPE_VER=1c7564468b41610da4f498430e795ca4de0931ff
 set LIBDEFLATE_VER=b01537448e8eaf0803e38bdba5acef1d1c8effba
+set LIBRDKAFKA_VER=9b72ca3aa6c49f8f57eea02f70aadb1453d3ba1f
 
 set PHP_PTHREADS_VER=4.1.3
 set PHP_YAML_VER=2.2.2
@@ -36,6 +37,7 @@ set PHP_XXHASH_VER=0.1.1
 set PHP_XDEBUG_VER=3.1.5
 
 set PHP_VANILLAGENERATOR_VER=56fc48ea1367e1d08b228dfa580b513fbec8ca31
+set PHP_LIBKAFKA_VER=8fce7a64dcd235be971d45428eab3e9b067ec413
 REM set PHP_ZSTD_VER=0.11.0
 
 set script_path=%~dp0
@@ -155,6 +157,38 @@ copy pthreadVC3.pdb "%DEPS_DIR%\bin\pthreadVC3.pdb" >>"%log_file%" 2>&1 || exit 
 
 cd /D "%DEPS_DIR%"
 
+call :pm-echo "Downloading librdkafka version %LIBRDKAFKA_VER%..."
+mkdir librdkafka
+cd /D librdkafka
+call :get-zip https://github.com/edenhill/librdkafka/archive/%LIBRDKAFKA_VER%.zip || exit 1
+move librdkafka-* librdkafka >>"%log_file%" 2>&1
+cd /D librdkafka
+
+call :pm-echo "Generating build configuration..."
+
+cmake -G "Release" -A "x64" -DBUILD_SHARED_LIBS=ON^
+ .
+cmake -G "%CMAKE_TARGET%" -A "%ARCH%"^
+ -DCMAKE_PREFIX_PATH="%DEPS_DIR%"^
+ -DCMAKE_INSTALL_PREFIX="%DEPS_DIR%"^
+ -DBUILD_SHARED_LIBS=ON^
+ . >>"%log_file%" 2>&1 || exit 1
+
+call :pm-echo "Compiling..."
+msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=x64 /p:AdditionalDependencies="%DEPS_DIR%\lib\zlib_a.lib" >>"%log_file%" 2>&1 || exit 1
+
+call :pm-echo "Copying files..."
+cd /D src
+
+mkdir %DEPS_DIR%\include\librdkafka
+
+copy rdkafka.h "%DEPS_DIR%\include\librdkafka\rdkafka.h" >>"%log_file%" 2>&1 || exit 1
+copy rdkafka_mock.h "%DEPS_DIR%\include\librdkafka\rdkafka_mock.h" >>"%log_file%" 2>&1 || exit 1
+copy Release\rdkafka.lib "%DEPS_DIR%\lib\rdkafka.lib" >>"%log_file%" 2>&1 || exit 1
+copy Release\rdkafka.dll "%DEPS_DIR%\bin\rdkafka.dll" >>"%log_file%" 2>&1 || exit 1
+
+cd /D "%DEPS_DIR%"
+
 call :pm-echo "Downloading pmmp/leveldb version %LEVELDB_MCPE_VER%..."
 call :get-zip https://github.com/pmmp/leveldb/archive/%LEVELDB_MCPE_VER%.zip || exit 1
 move leveldb-%LEVELDB_MCPE_VER% leveldb >>"%log_file%" 2>&1
@@ -207,6 +241,7 @@ call :get-extension-zip-from-github "libdeflate"            "%PHP_LIBDEFLATE_VER
 call :get-extension-zip-from-github "xxhash"                "%PHP_XXHASH_VER%"                "pmmp"     "ext-xxhash"              || exit 1
 call :get-extension-zip-from-github "xdebug"                "%PHP_XDEBUG_VER%"                "xdebug"   "xdebug"                  || exit 1
 call :get-extension-zip-from-github "vanillagenerator"      "%PHP_VANILLAGENERATOR_VER%" "NetherGamesMC" "ext-vanillagenerator"    || exit 1
+call :get-extension-zip-from-github "rdkafka"               "%PHP_LIBKAFKA_VER%"         "larryTheCoder" "php-rdkafka"             || exit 1
 
 REM call :pm-echo " - zstd: downloading %PHP_ZSTD_VER%..."
 REM git clone https://github.com/kjdev/php-ext-zstd.git zstd >>"%log_file%" 2>&1 || exit 1
@@ -288,6 +323,7 @@ REM --enable-zstd^
  --with-xdebug-compression^
  --with-xml^
  --with-yaml^
+ --with-rdkafka^
  --with-pdo-mysql^
  --with-pdo-sqlite^
  --without-readline >>"%log_file%" 2>&1 || call :pm-fatal-error "Error configuring PHP"
