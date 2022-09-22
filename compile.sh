@@ -18,7 +18,7 @@ LIBRDKAFKA_VER="9b72ca3aa6c49f8f57eea02f70aadb1453d3ba1f"
 
 EXT_PTHREADS_VERSION="4.1.3"
 EXT_YAML_VERSION="2.2.2"
-EXT_RDKAFKA_VERSION="8fce7a64dcd235be971d45428eab3e9b067ec413"
+EXT_RDKAFKA_VERSION="6.0.3"
 EXT_LEVELDB_VERSION="317fdcd8415e1566fc2835ce2bdb8e19b890f9f3"
 EXT_CHUNKUTILS2_VERSION="0.3.3"
 EXT_XDEBUG_VERSION="3.1.5"
@@ -577,11 +577,6 @@ function build_yaml {
 }
 
 function build_kafka {
-	if [ "$DO_STATIC" == "yes" ]; then
-		local EXTRA_FLAGS="--disable-shared"
-	else
-		local EXTRA_FLAGS="--enable-shared"
-	fi
 	echo -n "[librdkafka] downloading $LIBRDKAFKA_VER..."
 	download_file "https://github.com/edenhill/librdkafka/archive/$LIBRDKAFKA_VER.tar.gz" | tar -zx >> "$DIR/install.log" 2>&1
 	mv librdkafka-$LIBRDKAFKA_VER librdkafka
@@ -589,16 +584,27 @@ function build_kafka {
 
 	echo -n " checking..."
 
-	LDFLAGS="$LDFLAGS -L/usr/local/include -L/usr/local/lib -L${INSTALL_DIR}/lib" CPPFLAGS="$CPPFLAGS -I${INSTALL_DIR}/include" RANLIB=$RANLIB ./configure \
-	--prefix="$INSTALL_DIR" \
-	--disable-ssl \
-  	--disable-zstd \
-	$EXTRA_FLAGS \
-	$CONFIGURE_FLAGS >> "$DIR/install.log" 2>&1
+	if [ "$DO_STATIC" != "yes" ]; then
+		local EXTRA_FLAGS="-DBUILD_SHARED_LIBS=ON"
+	else
+		local EXTRA_FLAGS=""
+	fi
+	cmake . \
+		-DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
+		-DCMAKE_PREFIX_PATH="$INSTALL_DIR" \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DWITH_ZSTD=OFF \
+		-DWITH_SSL=OFF \
+		-DWITH_CURL=OFF \
+		-DCMAKE_BUILD_TYPE=Release \
+		$CMAKE_GLOBAL_EXTRA_FLAGS \
+		$EXTRA_FLAGS \
+		>> "$DIR/install.log" 2>&1
+
 	echo -n " compiling..."
-	make -j $THREADS libs >> "$DIR/install.log" 2>&1
+	make -j $THREADS >> "$DIR/install.log" 2>&1
 	echo -n " installing..."
-	make install-subdirs >> "$DIR/install.log" 2>&1
+	make install >> "$DIR/install.log" 2>&1
 	cd ..
 	echo " done!"
 }
@@ -804,8 +810,13 @@ function build_libdeflate {
 build_zlib
 build_gmp
 build_openssl
-build_kafka
 build_curl
+
+# For MacOS, we install kafka using brew
+if [ "$(uname -s)" != "Darwin" ]; then
+  build_kafka
+fi
+
 build_yaml
 build_leveldb
 if [ "$COMPILE_GD" == "yes" ]; then
@@ -886,7 +897,7 @@ get_github_extension "xxhash" "$EXT_XXHASH_VERSION" "pmmp" "ext-xxhash"
 
 get_github_extension "vanillagenerator" "$EXT_VANILLAGENERATOR_VERSION" "NetherGamesMC" "ext-vanillagenerator"
 
-get_github_extension "php-rdkafka" "$EXT_RDKAFKA_VERSION" "larryTheCoder" "php-rdkafka"
+get_github_extension "rdkafka" "$EXT_RDKAFKA_VERSION" "arnaud-lb" "php-rdkafka"
 
 echo -n "[PHP]"
 
