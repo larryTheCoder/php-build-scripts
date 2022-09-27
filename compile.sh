@@ -817,7 +817,7 @@ if [ "$(uname -s)" != "Darwin" ]; then
   build_kafka
   HAS_KAFKA="--with-rdkafka"
 else
-	HAS_KAFKA=""
+  HAS_KAFKA=""
 fi
 
 build_yaml
