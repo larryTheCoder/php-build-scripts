@@ -54,6 +54,7 @@ jobs:
   macos:
     name: MacOS
     runs-on: macos-11.0
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
 
     steps:
       - uses: actions/checkout@v2
@@ -98,6 +99,7 @@ jobs:
   windows:
     name: Windows
     runs-on: windows-2019
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
 
     steps:
       - uses: actions/checkout@v2
@@ -125,7 +127,8 @@ jobs:
   prepare-release:
     runs-on: ubuntu-18.04
     needs: [linux]
-    if: github.ref == 'refs/heads/stable'
+    if: "${{!contains(github.event.head_commit.message, '[ci skip]') && github.ref == 'refs/heads/stable'}}"
+
     steps:
       - uses: actions/checkout@v2
       - name: Set PHP version outputs
