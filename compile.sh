@@ -584,22 +584,32 @@ function build_kafka {
 
 	echo -n " checking..."
 
-	if [ "$DO_STATIC" != "yes" ]; then
-		local EXTRA_FLAGS="-DBUILD_SHARED_LIBS=ON"
-	else
-		local EXTRA_FLAGS=""
-	fi
-	cmake . \
-		-DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
-		-DCMAKE_PREFIX_PATH="$INSTALL_DIR" \
-		-DCMAKE_INSTALL_LIBDIR=lib \
-		-DWITH_ZSTD=OFF \
-		-DWITH_SSL=OFF \
-		-DWITH_CURL=OFF \
-		-DCMAKE_BUILD_TYPE=Release \
-		$CMAKE_GLOBAL_EXTRA_FLAGS \
-		$EXTRA_FLAGS \
-		>> "$DIR/install.log" 2>&1
+  if [ "$(uname -s)" != "Darwin" ]; then
+    if [ "$DO_STATIC" != "yes" ]; then
+      local EXTRA_FLAGS="-DBUILD_SHARED_LIBS=ON"
+    else
+      local EXTRA_FLAGS=""
+    fi
+    cmake . \
+      -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
+      -DCMAKE_PREFIX_PATH="$INSTALL_DIR" \
+      -DCMAKE_INSTALL_LIBDIR=lib \
+      -DWITH_ZSTD=OFF \
+      -DWITH_SSL=OFF \
+      -DWITH_CURL=OFF \
+      -DCMAKE_BUILD_TYPE=Release \
+      $CMAKE_GLOBAL_EXTRA_FLAGS \
+      $EXTRA_FLAGS \
+      >> "$DIR/install.log" 2>&1
+  else
+  	RANLIB=$RANLIB ./configure --prefix="$INSTALL_DIR" \
+    	$EXTRA_FLAGS \
+    	--install-deps \
+    	--source-deps-only \
+    	--enable-static \
+    	--disable-lz4-ext \
+    	--enable-strip >> "$DIR/install.log" 2>&1
+  fi
 
 	echo -n " compiling..."
 	make -j $THREADS >> "$DIR/install.log" 2>&1
@@ -812,13 +822,8 @@ build_gmp
 build_openssl
 build_curl
 
-# For MacOS, we install kafka using brew
-if [ "$(uname -s)" != "Darwin" ]; then
-  build_kafka
-  HAS_KAFKA="--with-rdkafka"
-else
-  HAS_KAFKA=""
-fi
+build_kafka
+HAS_KAFKA="--with-rdkafka"
 
 build_yaml
 build_leveldb
